@@ -17,13 +17,14 @@ jobs:
         with:
           python-version: "3.12.7"
 
-      - name: Install MLflow
+      - name: Install dependencies
         run: |
-          pip install mlflow
+          python -m pip install --upgrade pip
+          pip install mlflow pandas numpy scikit-learn matplotlib
 
-      - name: Run MLflow Project
+      - name: Run MLflow Project (no conda)
         run: |
-          mlflow run MLProject \
+          mlflow run MLProject --no-conda \
             -P n_estimators=150 \
             -P max_depth=15
 
