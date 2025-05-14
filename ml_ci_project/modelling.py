@@ -11,8 +11,6 @@ if __name__ == "__main__":
     n_estimators = int(sys.argv[3])
     max_depth = int(sys.argv[4])
 
-    mlflow.set_experiment("MentalHealth_CI_Project")
-
     # Tidak perlu mlflow.start_run() karena sudah dimulai otomatis oleh mlflow run
     df_train = pd.read_csv(train_path)
     df_test  = pd.read_csv(test_path)
