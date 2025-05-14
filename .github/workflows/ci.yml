@@ -24,7 +24,7 @@ jobs:
 
       - name: Run MLflow Project (no conda)
         run: |
-          mlflow run ml_ci_project --env-manager=local \
+          mlflow run MLProject --env-manager=local \
             -P n_estimators=150 \
             -P max_depth=15
 
@@ -51,6 +51,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ml_ci_project/Dockerfile
+          file: MLProject/Dockerfile
           push: true
           tags: adrianramadhan/mh-ml-model:latest
