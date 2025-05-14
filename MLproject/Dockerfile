@@ -1,14 +1,15 @@
 FROM continuumio/miniconda3
 
-# Copy project files (MLproject, conda.yaml, modelling.py, dan dataset)
-COPY MLproject conda.yaml modelling.py mental_health_dataset_preprocessing/ /app/
+# Salin seluruh folder MLproject (berisi MLproject file, conda.yaml, modelling.py, dataset)
+COPY MLproject /app/MLproject
 
-WORKDIR /app
+WORKDIR /app/MLproject
 
-# Buat environment Conda yang sesuai
+# Buat environment Conda sesuai conda.yaml
 RUN conda env create -f conda.yaml
 
-# Pastikan 'conda activate' berfungsi
+# Pastikan perintah selanjutnya dijalankan di environment mlflow-env
 SHELL ["conda", "run", "-n", "mlflow-env", "/bin/bash", "-c"]
 
+# Jalankan MLflow Project secara otomatis saat container start
 ENTRYPOINT ["mlflow", "run", ".", "--env-manager=local"]
