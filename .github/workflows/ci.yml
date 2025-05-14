@@ -2,7 +2,7 @@ name: CI - MLflow Project
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
@@ -12,19 +12,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: "3.12.7"
+          # Buat environment sesuai conda.yaml
+          environment-file: MLproject/conda.yaml
+          activate-environment: mlproject-env
 
-      - name: Install dependencies
+      - name: Install additional pip deps
         run: |
-          python -m pip install --upgrade pip
-          pip install mlflow pandas numpy scikit-learn matplotlib
+          # Pastikan pip terbaru di dalam conda-env
+          pip install --upgrade pip
+          # Jika ada paket extra yang tidak ada di conda.yaml
+          pip install mlflow
 
-      - name: Run MLflow Project (no conda)
+      - name: Verify conda env
         run: |
-          mlflow run MLproject --env-manager=local \
+          conda info --envs
+          python --version
+          pip list
+
+      - name: Run MLflow Project (via Conda)
+        run: |
+          # Karena kita sudah activate env, cukup jalankan mlflow run
+          mlflow run MLproject \
             -P n_estimators=150 \
             -P max_depth=15
 
@@ -47,7 +58,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
           context: .
