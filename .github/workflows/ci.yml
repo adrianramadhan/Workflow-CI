@@ -8,33 +8,23 @@ on:
 jobs:
   train:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          # Buat environment sesuai conda.yaml
           environment-file: MLproject/conda.yaml
           activate-environment: mlproject-env
 
-      - name: Install additional pip deps
+      - name: Install pip deps
         run: |
-          # Pastikan pip terbaru di dalam conda-env
           pip install --upgrade pip
-          # Jika ada paket extra yang tidak ada di conda.yaml
-          pip install mlflow
+          pip install mlflow pandas numpy scikit-learn matplotlib
 
-      - name: Verify conda env
+      - name: Run MLflow Project (with conda)
         run: |
-          conda info --envs
-          python --version
-          pip list
-
-      - name: Run MLflow Project (via Conda)
-        run: |
-          # Karena kita sudah activate env, cukup jalankan mlflow run
           mlflow run MLproject \
             -P n_estimators=150 \
             -P max_depth=15
@@ -49,17 +39,12 @@ jobs:
     needs: train
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v2
+      - uses: docker/build-push-action@v2
         with:
           context: .
           file: MLproject/Dockerfile
