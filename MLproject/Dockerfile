@@ -1,7 +1,7 @@
 FROM continuumio/miniconda3
 
-COPY MLProject /app/MLProject
-WORKDIR /app/MLProject
+COPY MLproject /app/MLproject
+WORKDIR /app/MLproject
 
 RUN conda env create -f conda.yaml
 
