@@ -22,9 +22,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install mlflow pandas numpy scikit-learn matplotlib
 
-      - name: Run MLflow Project (no conda)
+      - name: Run MLflow Project
         run: |
-          mlflow run MLProject --no-conda \
+          mlflow run MLProject \
             -P n_estimators=150 \
             -P max_depth=15
 
@@ -34,7 +34,6 @@ jobs:
           name: mh-model
           path: mlruns/0/*/artifacts/model/
 
-  # (Advance) Build & Push Docker image
   docker:
     needs: train
     runs-on: ubuntu-latest
@@ -52,6 +51,6 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: MLProject/Dockerfile   # Anda dapat menambahkan Dockerfile
+          file: MLProject/Dockerfile
           push: true
           tags: adrianramadhan/mh-ml-model:latest
