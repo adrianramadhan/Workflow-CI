@@ -24,7 +24,7 @@ jobs:
 
       - name: Run MLflow Project (no conda)
         run: |
-          mlflow run Mml_ci_project \
+          mlflow run ml_ci_project \
             -P n_estimators=150 \
             -P max_depth=15
 
