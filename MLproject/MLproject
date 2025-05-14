@@ -1,5 +1,5 @@
 name: MentalHealthClassification
-conda_env: conda.yaml
+conda_env: conda.yaml # pastikan ini ada
 
 entry_points:
   main:

@@ -23,11 +23,12 @@ jobs:
           pip install --upgrade pip
           pip install mlflow pandas numpy scikit-learn matplotlib
 
-      - name: Run MLflow Project (with conda)
+      - name: Run MLflow Project
         run: |
-          mlflow run MLproject \
+          mlflow run . --env-manager=local \
             -P n_estimators=150 \
             -P max_depth=15
+
 
       - name: Upload model artifact
         uses: actions/upload-artifact@v4
