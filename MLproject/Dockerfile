@@ -1,15 +1,27 @@
-FROM continuumio/miniconda3
+FROM python:3.12-slim
 
-# Salin seluruh folder MLproject (berisi MLproject file, conda.yaml, modelling.py, dataset)
-COPY MLproject /app/MLproject
+# 1) Install MLflow + dependencies minimal
+RUN pip install --no-cache-dir mlflow scikit-learn pandas uvicorn fastapi prometheus_client
 
-WORKDIR /app/MLproject
+# 2) Copy in artefak model hasil CI
+#    Asumsikan Anda menaruh model hasil mlflow.sklearn.log_model
+#    di folder `model/` di root repo sebelum build
+COPY model /app/model
 
-# Buat environment Conda sesuai conda.yaml
-RUN conda env create -f conda.yaml
+WORKDIR /app
 
-# Pastikan perintah selanjutnya dijalankan di environment mlflow-env
-SHELL ["conda", "run", "-n", "mlflow-env", "/bin/bash", "-c"]
+# 3) Copy inference script
+COPY inference.py /app/inference.py
 
-# Jalankan MLflow Project secara otomatis saat container start
-ENTRYPOINT ["mlflow", "run", ".", "--env-manager=local"]
+# 4) Expose ports: 
+#    - 8080 untuk MLflow serve
+#    - 8000 untuk FastAPI/prometheus exporter (jika digabung)
+EXPOSE 8080
+EXPOSE 8000
+
+# 5) Entrypoint: jalankan MLflow model server
+ENTRYPOINT ["mlflow", "models", "serve", \
+            "--model-uri", "model", \
+            "--no-conda", \
+            "--host", "0.0.0.0", \
+            "--port", "8080"]

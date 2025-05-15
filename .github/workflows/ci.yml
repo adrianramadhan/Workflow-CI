@@ -1,52 +1,79 @@
-name: CI - MLflow Project
+name: CI/CD MLflow
 
 on:
   push:
-    branches: [master]
-  workflow_dispatch:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  train:
+  build:
     runs-on: ubuntu-latest
+    env:
+      # Tidak benar‑benar dipakai, tapi boleh disesuaikan jika butuh
+      CSV_URL: "MLproject/train_pca.csv"
+      TARGET_VAR: "Credit_Score"
 
     steps:
-      - uses: actions/checkout@v4
+      # 1. Checkout code
+      - uses: actions/checkout@v3
 
-      - name: Set up Miniconda
-        uses: conda-incubator/setup-miniconda@v2
+      # 2. Setup Python
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v4
         with:
-          environment-file: MLproject/conda.yaml
-          activate-environment: mlproject-env
+          python-version: "3.12.7"
 
-      - name: Install pip deps
+      # 3. Install dependencies
+      - name: Install dependencies
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install mlflow pandas numpy scikit-learn matplotlib
 
+      # 4. Run MLflow Project (CI)
       - name: Run MLflow Project
         run: |
           mlflow run MLproject --env-manager=local \
             -P n_estimators=100 \
             -P max_depth=20
 
-      - name: Upload model artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mh-model
-          path: mlruns/0/*/artifacts/model/
+      # 5. Get latest run_id
+      - name: Get latest MLflow run_id
+        run: |
+          RUN_ID=$(ls -td mlruns/0/*/ | head -n1 | cut -d'/' -f3)
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+          echo "Latest run_id: $RUN_ID"
 
-  docker:
-    needs: train
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v2
+      # 6. Build serving Docker image via MLflow
+      - name: Build MLflow serving Docker image
+        run: |
+          mlflow models build-docker \
+            --model-uri "runs:/$RUN_ID/model" \
+            --name "mh-model" \
+            --no-conda
+
+      # 7. Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - uses: docker/build-push-action@v2
+
+      # 8. Tag the Docker image
+      - name: Tag Docker image
+        run: |
+          docker tag mh-model:latest ${{ secrets.DOCKERHUB_USERNAME }}/mh-model:latest
+
+      # 9. Push Docker image to Docker Hub
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/mh-model:latest
+
+      # 10. (Opsional) Upload the model artifacts
+      - name: Upload MLruns artifacts
+        uses: actions/upload-artifact@v4
         with:
-          context: .
-          file: MLproject/Dockerfile
-          push: true
-          tags: adrianramadhan/mh-ml-model:latest
+          name: mlruns-artifacts
+          path: mlruns/0/$RUN_ID/artifacts/model/
